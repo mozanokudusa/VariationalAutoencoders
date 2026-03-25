@@ -1,0 +1,24 @@
+# --- Core Deep Learning (PyTorch 2.11 Ecosystem) ---
+torch==2.11.0
+torchvision==0.26.0
+torchaudio==2.11.0
+
+# --- Data Processing & Numerics ---
+numpy==2.4.3
+pandas==3.0.1
+scikit-learn==1.8.0
+scipy==1.15.0
+
+# --- Interactive Visualization & Plotting ---
+plotly==6.0.0
+matplotlib==3.10.0
+seaborn==0.13.2
+
+# --- Utilities & Experiment Tracking ---
+tqdm==4.67.1
+h5py==3.16.0
+pyyaml==6.0.3
+pillow==11.1.0
+
+# --- Development Environment ---
+ipykernel==7.2.0
