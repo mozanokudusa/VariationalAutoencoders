@@ -1,9 +1,8 @@
 from .base import VariationalAutoencoder
 from .encoders.conv2 import Conv2Encoder
 from .decoders.conv2 import Conv2Decoder
-# When you create conv3.py, you would add those imports here:
-# from .encoders.conv3 import Conv3Encoder
-# from .decoders.conv3 import Conv3Decoder
+from .encoders.conv3 import Conv3Encoder
+from .decoders.conv3 import Conv3Decoder
 
 def get_model(config):
     """
@@ -15,16 +14,15 @@ def get_model(config):
     Returns:
         model (nn.Module): The initialized Variational Autoencoder.
     """
-    # 1. Map strings to classes
-    # This makes it easy to expand later
+    # Map strings to classes
     encoder_registry = {
         "conv2": Conv2Encoder,
-        # "conv3": Conv3Encoder, 
+        "conv3": Conv3Encoder, 
     }
     
     decoder_registry = {
         "conv2": Conv2Decoder,
-        # "conv3": Conv3Decoder,
+        "conv3": Conv3Decoder,
     }
 
     # 2. Extract settings from config
