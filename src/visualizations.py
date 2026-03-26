@@ -40,14 +40,15 @@ def plot_reconstructions(model, x_tensor, device, epoch, save_path, num_images=8
         n = min(x_tensor.size(0), num_images)
         x = x_tensor[:n].to(device)
         
-        # Get reconstructions from the model
-        x_recon, _, _ = model(x)
+        # Get logits from the model
+        recon_logits, _, _ = model(x)
+
+        x_recon = torch.sigmoid(recon_logits)
         
         # Combine into a grid (Originals on top, Reconstructions on bottom)
         comparison = torch.cat([x, x_recon])
         grid = make_grid(comparison.cpu(), nrow=n, normalize=True)
         
-        # Convert to numpy and plot
         plt.figure(figsize=(n * 1.5, 3))
         plt.imshow(grid.permute(1, 2, 0).numpy())
         plt.title(f"Reconstructions - Epoch {epoch}")

@@ -1,55 +1,82 @@
-from .base import VariationalAutoencoder
+import torch
+import torch.nn as nn
+
+# Import Standard VAE Components
 from .encoders.conv2 import Conv2Encoder
-from .decoders.conv2 import Conv2Decoder
 from .encoders.conv3 import Conv3Encoder
+from .decoders.conv2 import Conv2Decoder
 from .decoders.conv3 import Conv3Decoder
 
-def get_model(config):
-    """
-    Factory function to instantiate the model based on the config.
-    
-    Args:
-        config (dict): The 'model' section of your YAML configuration.
+# Import VQ-VAE Assembly
+from .vq_vae import VQVAE
+
+# Registries for standard VAE modularity
+ENCODER_REGISTRY = {
+    "conv2": Conv2Encoder,
+    "conv3": Conv3Encoder
+}
+
+DECODER_REGISTRY = {
+    "conv2": Conv2Decoder,
+    "conv3": Conv3Decoder
+}
+
+class StandardVAE(nn.Module):
+    """Wrapper to assemble standard encoders and decoders."""
+    def __init__(self, encoder, decoder):
+        super().__init__()
+        self.encoder = encoder
+        self.decoder = decoder
+
+    def forward(self, x):
+        mu, logvar = self.encoder(x)
+        # Reparameterization trick
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        z = mu + eps * std
         
-    Returns:
-        model (nn.Module): The initialized Variational Autoencoder.
-    """
-    # Map strings to classes
-    encoder_registry = {
-        "conv2": Conv2Encoder,
-        "conv3": Conv3Encoder, 
-    }
-    
-    decoder_registry = {
-        "conv2": Conv2Decoder,
-        "conv3": Conv3Decoder,
-    }
+        x_recon = self.decoder(z)
+        return x_recon, mu, logvar
 
-    # 2. Extract settings from config
-    model_cfg = config['model']
-    enc_type = model_cfg.get('encoder_type', 'conv2')
-    dec_type = model_cfg.get('decoder_type', 'conv2')
-    
-    # Universal parameters passed to both components
-    params = {
-        "input_channels": model_cfg['input_channels'],
-        "image_size": model_cfg['image_size'],
-        "hidden_channels": model_cfg['capacity'],
-        "latent_dim": model_cfg['latent_dims']
-    }
+def get_model(config):
+    """Factory function to build models based on the YAML config."""
+    model_config = config['model']
+    model_name = model_config.get('name', 'variational_autoencoder')
 
-    # 3. Instantiate the components
-    if enc_type not in encoder_registry or dec_type not in decoder_registry:
-        raise ValueError(f"Unsupported architecture: {enc_type}/{dec_type}")
+    if model_name == 'variational_autoencoder':
+        # 1. Build Standard VAE
+        enc_type = model_config.get('encoder_type', 'conv2')
+        dec_type = model_config.get('decoder_type', 'conv2')
+        
+        encoder_class = ENCODER_REGISTRY[enc_type]
+        decoder_class = DECODER_REGISTRY[dec_type]
+        
+        encoder = encoder_class(
+            input_channels=model_config['input_channels'],
+            image_size=model_config['image_size'],
+            hidden_channels=model_config['capacity'],
+            latent_dim=model_config['latent_dims']
+        )
+        
+        decoder = decoder_class(
+            output_channels=model_config['input_channels'],
+            image_size=model_config['image_size'],
+            hidden_channels=model_config['capacity'],
+            latent_dim=model_config['latent_dims']
+        )
+        
+        return StandardVAE(encoder, decoder)
 
-    encoder = encoder_registry[enc_type](**params)
-    
-    # Decoders usually use 'output_channels', so we swap the key name
-    dec_params = params.copy()
-    dec_params['output_channels'] = dec_params.pop('input_channels')
-    decoder = decoder_registry[dec_type](**dec_params)
+    elif model_name == 'vq_vae':
+        # 2. Build VQ-VAE
+        return VQVAE(
+            input_channels=model_config['input_channels'],
+            #image_size=model_config['image_size'],
+            hidden_channels=model_config['capacity'],
+            num_embeddings=model_config['num_embeddings'],
+            embedding_dim=model_config['embedding_dim'],
+            commitment_cost=model_config.get('commitment_cost', 0.25)
+        )
 
-    # 4. Wrap in the VAE logic
-    model = VariationalAutoencoder(encoder, decoder)
-    
-    return model
+    else:
+        raise ValueError(f"Unknown model name in config: {model_name}")

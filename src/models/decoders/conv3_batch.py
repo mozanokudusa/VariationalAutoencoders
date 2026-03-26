@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-class Conv3Decoder(nn.Module):
+class Conv3Decoder_Batch(nn.Module):
     def __init__(self, output_channels, image_size, hidden_channels, latent_dim):
         super().__init__()
         self.final_spatial = 4
