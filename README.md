@@ -15,3 +15,5 @@ The second section allows for selection of any model among a linear VAE, convolu
 The *train_mixed* notebook is the same as the normal precision notebook except performs training using the **AMP** package of pytorch. The tuning and pathing procedures remain the same.
 
 The *train_prior* file contains the training procedure for a prior **Pixel CNN** in order to generate images using the VQ-VAE. The desired VQ-VAE model path can be provided in order for training of the prior.
+
+***Note: Additional folders called logs and outputs exist in the original training procedure where jsons for loss and hyperparam logging and reconstructions are stored. The checkpoints get stored in a models/checkpoints folder***
