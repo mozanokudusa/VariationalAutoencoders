@@ -1,21 +1,5 @@
 """
 Training utilities – checkpointing, metrics, and JSON run logging.
-=====================================================================
-Handles:
-  • Saving / loading model checkpoints (with optimizer & scheduler state).
-  • Computing image-quality metrics (PSNR, SSIM) on [0,1]-range tensors.
-  • Accumulating per-epoch metrics and flushing to a JSON log at the
-    end of training.
-
-The JSON log structure adapts automatically to whatever metrics the
-model declares via its `extra_metrics` attribute – no code changes
-needed when a new model variant is added.
-
-CHANGE POINTS:
-  • To add a new *standard* metric (tracked for every model), add its
-    computation in `compute_image_metrics()` and initialise it in
-    `MetricTracker.__init__`.
-=====================================================================
 """
 
 import json
@@ -30,10 +14,6 @@ import torch
 import torch.nn as nn
 from torch import Tensor
 
-
-# ==================================================================
-# Image-quality metrics
-# ==================================================================
 
 def compute_psnr(recon: Tensor, target: Tensor, max_val: float = 1.0) -> float:
     """
@@ -59,7 +39,7 @@ def _gaussian_kernel_2d(
 ) -> Tensor:
     """2-D Gaussian kernel for depth-wise convolution."""
     k1d = _gaussian_kernel_1d(size, sigma, device)
-    k2d = k1d.unsqueeze(1) @ k1d.unsqueeze(0)  # outer product
+    k2d = k1d.unsqueeze(1) @ k1d.unsqueeze(0)
     kernel = k2d.expand(channels, 1, size, size).contiguous()
     return kernel
 
@@ -123,10 +103,6 @@ def compute_image_metrics(recon: Tensor, target: Tensor) -> Dict[str, float]:
     }
 
 
-# ==================================================================
-# Metric tracker (accumulates per-epoch values)
-# ==================================================================
-
 class MetricTracker:
     """
     Accumulates running sums for an epoch, then computes averages.
@@ -184,11 +160,6 @@ class MetricTracker:
         self._sums.clear()
         self._counts.clear()
 
-
-# ==================================================================
-# Checkpointing
-# ==================================================================
-
 def save_checkpoint(
     model: nn.Module,
     optimizer: torch.optim.Optimizer,
@@ -234,11 +205,6 @@ def load_checkpoint(
         scheduler.load_state_dict(ckpt["scheduler_state_dict"])
     return ckpt
 
-
-# ==================================================================
-# JSON run logger
-# ==================================================================
-
 @dataclass
 class RunLog:
     """
@@ -248,7 +214,7 @@ class RunLog:
     at each epoch for crash safety).
     """
 
-    # --- Hyperparameters (set before training) ---
+    # Hyperparams
     model_name: str = ""
     dataset: str = ""
     epochs: int = 0
@@ -284,9 +250,6 @@ class RunLog:
         return cls(**data)
 
 
-# ==================================================================
-# Timer helper
-# ==================================================================
 
 class Timer:
     """Simple wall-clock timer."""
