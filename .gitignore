@@ -2,8 +2,6 @@ dl_env/
 logs/
 models/__pycache__/
 train/__pycache__/
-train/train_vaegan.ipynb
-models/vae_gan.py
 data/__pycache__
 data/processed/
 data/raw/
